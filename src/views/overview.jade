@@ -1,0 +1,38 @@
+doctype html
+html
+	head
+		style
+			include ../style.css
+
+		script(src='http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js')
+		script.
+			$(document).ready(function () {
+	
+					}
+
+				});
+			});
+	body
+		#nav
+			ul
+				li 
+					a(href='/') HOOOME ✿
+				li 
+					a(href='/login') LOG IN ✿
+				li
+					a(href='/register') OR REGISTER ✿
+				li
+					a(href='/profile') CHECK OUT YOUR PROFILE ✿
+				li
+					a(href='/createpost') OR CREATE AN AMAZING POST ✿
+				li.active
+					a(href='/overview') AND IF YOU WANT TO, YOU CAN SEE ALL POSTS ✿
+				li
+					a(href='/specific') OR A SPECIFIC POST ✿
+		br 
+		br
+			
+		#main
+			each message in allMessages
+				h2 #{message.title}
+				h3 ✏ #{message.body}

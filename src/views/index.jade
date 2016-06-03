@@ -1,7 +1,10 @@
 doctype html
 html
 	head
+		style
+			include ../style.css
 		script(src='http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js')
+		link(rel='apple-touch-icon-precomposed', sizes='152x152', href='favicon-152.png')
 		script.
 			$(document).ready(function () {
 				$('#submit').click(function(event) {
@@ -12,16 +15,35 @@ html
 				});
 			});
 	body
-		if user
-			a(href='/profile') view profile
-			br
-			a(href='/logout') log out
-		else
-			form(action='/login' method='post')
-				label email
-				input#email(name='email' required)
-				label password
-				input#password(name='password' required)
-				input(type='submit' value='login' id='submit')
+		#nav
+			ul
+				li.active
+						a(href='/') HOOOME ✿
+					li 
+						a(href='/login') LOG IN ✿
+					li
+						a(href='/register') OR REGISTER ✿
+					li
+						a(href='/profile') CHECK OUT YOUR PROFILE ✿
+					li
+						a(href='/createpost') OR CREATE AN AMAZING POST ✿
+					li
+						a(href='/overview') AND IF YOU WANT TO, YOU CAN SEE ALL POSTS ✿
+					li
+						a(href='/specific') OR A SPECIFIC POST ✿
+					li
+						a(href='/logout') LOG OUT AND BYE BYE ✿
+		br 
+		br
+		#main
+			if user
+				a(href='/profile') view profile
+				br
+				a(href='/logout') log out
+			else
+				Currently you are not logged in, why dont you?  
+				a(href='/login') LOG IN ✰
 
-		h2#error-message= message
+			
+
+		
