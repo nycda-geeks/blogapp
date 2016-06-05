@@ -29,17 +29,17 @@ var message = sequelize.define('messages', {
 var comment = sequelize.define('comment', {
 	title: Sequelize.STRING,
 	body: Sequelize.TEXT,
-	user_id: Sequelize.INTEGER
+	message_id: Sequelize.INTEGER
 });
 
-user.hasMany(message)
-user.hasMany(comment)
-comment.belongsTo(user)
-comment.belongsTo(message)
-message.hasMany(comment)
-message.belongsTo(user)
+user.hasMany(message);
+message.belongsTo(user);
+message.hasMany(comment);
+comment.belongsTo(message);
+user.hasMany(comment);
+comment.belongsTo(user);
 
-sequelize.sync().then(function () {
+sequelize.sync({force: false}).then(function () {
 	console.log('sync done')
 });
 
@@ -211,22 +211,50 @@ app.get('/overview', function(request, response) {
 	};
 });
 
+app.post('/comment', function(request, response){
+	if(request.body.postComment != undefined){
+		Promise.all([
+			Comment.create({
+				body: request.body.postComment
+			}),
+			User.findOne({
+				where: {
+					id: request.session.user.id
+				}
+			}),
+			Post.findOne({
+				where: {
+					id: request.body.id
+				}
+			})
+			]).then(function(allofthem){
+				allofthem[0].setUser(allofthem[1])
+				allofthem[0].setPost(allofthem[2])
+			}).then(function(){
+				res.redirect(req.body.origin)
+			})
+		}
+		if(req.body.postComment === undefined) {
+			res.redirect(req.body.origin + '?message=' + encodeURIComponent("Please write a comment first."))
+		}
+
+	})
+
 app.get('/specific', function(request, response) {
-	var user = request.session.user;
-	if (user === undefined) {
+	var usert = request.session.user;
+	if (usert === undefined) {
 		response.redirect('/?message=' + encodeURIComponent("Please log in to view your profile."));
 	} else {
 	user.findAll().then(function (users) {
 	var everyOne = users.map(function (user) {
 		return {
-			name: appmessage.dataValues.name
-		}
+			name: user.dataValues.name
+		};
 	});
-	var allUsers = data;
-		// console.log(allOwnMessages);
-		console.log(allOwnMessages);
+	var allUsers = everyOne;
+		console.log(allUsers);
 		response.render('specific', {
-			allUsers: allUsers
+			allUsers:allUsers
 				});
 	})		
 };

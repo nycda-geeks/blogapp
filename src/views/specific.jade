@@ -30,7 +30,9 @@ html
 					a(href='/overview') AND IF YOU WANT TO, YOU CAN SEE ALL POSTS ✿
 				li.active
 					a(href='/specific') OR A SPECIFIC POST ✿
-		br 
+				li
+					a(href='/logout') LOG OUT AND BYE BYE ✿
+		br
 		br
 		#main
 			if user
@@ -38,11 +40,6 @@ html
 				br
 				a(href='/logout') log out
 			else
-				form(action='/createpost' method='post')
-					label title
-					input#title(name='title' required)
-					label body
-					input#body(name='body' required)
-					input(type='submit' value='login' id='submit')
-
-			
+				each user in allUsers
+					a(href="/message/" + user.name) #{user.name}
+					br
