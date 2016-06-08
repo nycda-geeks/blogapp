@@ -30,11 +30,11 @@ html
 					a(href='/specific') OR A SPECIFIC POST ✿
 				li
 					a(href='/logout') LOG OUT AND BYE BYE ✿
-		br
+	br 
 		br
 		#main
 			p
-			Welkom op je profiel
-				each message in allOwnMessages
+			Welkom op het profiel van #{user.name}
+				each message in allUsersMessages
 					h2 #{message.title}
 					h3 ✏ #{message.body}

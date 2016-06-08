@@ -2,7 +2,7 @@ doctype html
 html
 	head
 		style
-			include ../style.css
+			include ../../style.css
 		script(src='http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js')
 		script.
 			$(document).ready(function () {
@@ -10,7 +10,6 @@ html
 					}
 
 				});
-			});
 	body
 		#nav
 			ul
@@ -33,8 +32,8 @@ html
 		br
 		br
 		#main
-			p
-			Welkom op je profiel
-				each message in allOwnMessages
+			p Welkom alle berichten van jouw gekozen user!
+				each message in allUsersMessages
 					h2 #{message.title}
 					h3 ✏ #{message.body}
+			

@@ -6,13 +6,7 @@ html
 		script(src='http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js')
 		script.
 			$(document).ready(function () {
-				$('#submit').click(function(event) {
-					if($('#title').val().trim().length === 0 || $('#body').val().trim().length === 0) {
-						event.preventDefault();
-						$('#error-message').html("No proper post is found!");
-					}
 				});
-			});
 	body
 		#nav
 			ul
@@ -40,6 +34,8 @@ html
 				br
 				a(href='/logout') log out
 			else
-				each user in allUsers
-					a(href="/message/" + user.name) #{user.name}
-					br
+				h2 ⌬See posts by: 
+							br
+					each user in allUsers
+						a(href='/users/profile/' + user.id) #{user.name}
+						br

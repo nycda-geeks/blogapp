@@ -2,6 +2,8 @@ var Sequelize = require('sequelize');
 var express = require('express');
 var bodyParser = require('body-parser');
 var session = require('express-session');
+var fs = require('fs')
+var pg = require('pg')
 
 
 var sequelize = new Sequelize('sarithbreedijk', 'sarithbreedijk', null, {
@@ -13,7 +15,7 @@ var sequelize = new Sequelize('sarithbreedijk', 'sarithbreedijk', null, {
 });
 
 
-var user = sequelize.define('user', {
+var user = sequelize.define('users', {
 	name: Sequelize.STRING,
 	email: Sequelize.STRING,
 	password: Sequelize.STRING,
@@ -39,7 +41,9 @@ comment.belongsTo(message);
 user.hasMany(comment);
 comment.belongsTo(user);
 
-sequelize.sync({force: false}).then(function () {
+sequelize.sync({
+	force: false
+}).then(function() {
 	console.log('sync done')
 });
 
@@ -56,7 +60,7 @@ app.use(session({
 
 app.set('views', './src/views');
 app.set('view engine', 'jade');
-app.use(express.static('src'));
+app.use(express.static('./src'));
 app.use(express.static('../js'));
 
 app.get('/', function(request, response) {
@@ -68,18 +72,19 @@ app.get('/', function(request, response) {
 
 
 app.get('/login', function(request, response) {
-	response.render('login', {
-	});
+	response.render('login', {});
 });
 
 
-app.post('/login', bodyParser.urlencoded({extended: true}), function(request, response) {
-	if(request.body.email.length === 0) {
+app.post('/login', bodyParser.urlencoded({
+	extended: true
+}), function(request, response) {
+	if (request.body.email.length === 0) {
 		response.redirect('/?message=' + encodeURIComponent("Please fill out your email address."));
 		return;
 	}
 
-	if(request.body.password.length === 0) {
+	if (request.body.password.length === 0) {
 		response.redirect('/?message=' + encodeURIComponent("Please fill out your password."));
 		return;
 	}
@@ -95,7 +100,7 @@ app.post('/login', bodyParser.urlencoded({extended: true}), function(request, re
 		} else {
 			response.redirect('/?message=' + encodeURIComponent("Invalid email or password."));
 		}
-	}, function (error) {
+	}, function(error) {
 		response.redirect('/?message=' + encodeURIComponent("Invalid email or password."));
 	});
 });
@@ -106,35 +111,35 @@ app.get('/profile', function(request, response) {
 	if (user === undefined) {
 		response.redirect('/?message=' + encodeURIComponent("Please log in to view your profile."));
 	} else {
-	var ID = request.session.user.id;
-	message.findAll({
-		where:{
-			user_id: ID,
-		}
-	}).then(function (messages) {
-	var Data = messages.map(function (appmessage) {
-		return {
-			title: appmessage.dataValues.title,
-			body: appmessage.dataValues.body,
-			user_id: appmessage.dataValues.user_id
-		}
-	
-	})	
-	var allOwnMessages = Data;
-		// console.log(allOwnMessages);
-		console.log(allOwnMessages);
-		response.render('profile', {
-			allOwnMessages: allOwnMessages
-				});
-	})		
-};
+		var ID = request.session.user.id;
+		message.findAll({
+			where: {
+				user_id: ID,
+			}
+		}).then(function(messages) {
+			var Data = messages.map(function(appmessage) {
+				return {
+					title: appmessage.dataValues.title,
+					body: appmessage.dataValues.body,
+					user_id: appmessage.dataValues.user_id
+				}
+
+			})
+			var allOwnMessages = Data;
+			// console.log(allOwnMessages);
+			console.log(allOwnMessages);
+			response.render('profile', {
+				allOwnMessages: allOwnMessages
+			});
+		})
+	};
 });
 
 
 
 app.get('/logout', function(request, response) {
 	request.session.destroy(function(error) {
-		if(error) {
+		if (error) {
 			throw error;
 		}
 		response.redirect('/?message=' + encodeURIComponent("Successfully logged out."));
@@ -143,23 +148,25 @@ app.get('/logout', function(request, response) {
 
 
 app.get('/register', function(request, response) {
-	response.render('register', {
-	});
+	response.render('register', {});
 });
 
 
-app.post('/register', bodyParser.urlencoded({extended: true}), function(request, response) {
+app.post('/register', bodyParser.urlencoded({
+	extended: true
+}), function(request, response) {
 	user.create({
 		name: request.body.name,
 		email: request.body.email,
 		password: request.body.password
-	}).then(function(){
-		if (typeof(user) == 'undefined'){
-  			response.redirect('/login')
-  		} if (typeof(user) !== 'undefined') {
-  			response.redirect('/?message=' + encodeURIComponent("This user already exists"));
-		return;
-  		}
+	}).then(function() {
+		if (typeof(user) == 'undefined') {
+			response.redirect('/login')
+		}
+		if (typeof(user) !== 'undefined') {
+			response.redirect('/?message=' + encodeURIComponent("This user already exists"));
+			return;
+		}
 
 	});
 });
@@ -171,13 +178,14 @@ app.get('/createpost', function(request, response) {
 	if (user === undefined) {
 		response.redirect('/?message=' + encodeURIComponent("Please log in to view your profile."));
 	} else {
-	response.render('createpost', {
-	});
-};
+		response.render('createpost', {});
+	};
 });
 
 
-app.post('/createpost', bodyParser.urlencoded({extended: true}), function(request, response) {
+app.post('/createpost', bodyParser.urlencoded({
+	extended: true
+}), function(request, response) {
 	var ID = request.session.user.id;
 
 	message.create({
@@ -185,34 +193,35 @@ app.post('/createpost', bodyParser.urlencoded({extended: true}), function(reques
 		body: request.body.body,
 		user_id: ID
 
-		}).then(function(){
-  			response.redirect('/overview')
-  		});
-  	});
-  	
+	}).then(function() {
+		response.redirect('/overview')
+	});
+});
+
 
 app.get('/overview', function(request, response) {
 	var user = request.session.user;
 	if (user === undefined) {
 		response.redirect('/?message=' + encodeURIComponent("Please log in to view your profile."));
 	} else {
-	message.findAll().then(function (messages) {
-	var data = messages.map(function (message) {
-		return {
-			title: message.dataValues.title,
-			body: message.dataValues.body
-		};	
-	});
-	var allMessages = data;
-	response.render('overview', {
-			allMessages:allMessages
+		message.findAll().then(function(messages) {
+			var data = messages.map(function(message) {
+				return {
+					title: message.dataValues.title,
+					body: message.dataValues.body
+				};
+			});
+			var allMessages = data;
+			response.render('overview', {
+				allMessages: allMessages
+			});
 		});
-	}); 
 	};
 });
 
-app.post('/comment', function(request, response){
-	if(request.body.postComment != undefined){
+
+app.post('/comment', function(request, response) {
+	if (request.body.postComment != undefined) {
 		Promise.all([
 			Comment.create({
 				body: request.body.postComment
@@ -227,44 +236,68 @@ app.post('/comment', function(request, response){
 					id: request.body.id
 				}
 			})
-			]).then(function(allofthem){
-				allofthem[0].setUser(allofthem[1])
-				allofthem[0].setPost(allofthem[2])
-			}).then(function(){
-				res.redirect(req.body.origin)
-			})
-		}
-		if(req.body.postComment === undefined) {
-			res.redirect(req.body.origin + '?message=' + encodeURIComponent("Please write a comment first."))
-		}
+		]).then(function(allofthem) {
+			allofthem[0].setUser(allofthem[1])
+			allofthem[0].setPost(allofthem[2])
+		}).then(function() {
+			res.redirect(req.body.origin)
+		})
+	}
+	if (req.body.postComment === undefined) {
+		res.redirect(req.body.origin + '?message=' + encodeURIComponent("Please write a comment first."))
+	}
 
-	})
+})
+
 
 app.get('/specific', function(request, response) {
 	var usert = request.session.user;
 	if (usert === undefined) {
 		response.redirect('/?message=' + encodeURIComponent("Please log in to view your profile."));
 	} else {
-	user.findAll().then(function (users) {
-	var everyOne = users.map(function (user) {
-		return {
-			name: user.dataValues.name
-		};
-	});
-	var allUsers = everyOne;
-		console.log(allUsers);
-		response.render('specific', {
-			allUsers:allUsers
-				});
-	})		
-};
+		user.findAll().then(function(users) {
+			var everyOne = users.map(function(user) {
+				return {
+					name: user.dataValues.name,
+					id: user.dataValues.id
+				};
+			});
+			var allUsers = everyOne;
+			console.log(allUsers);
+			response.render('specific', {
+				allUsers: allUsers
+			});
+		})
+	};
 });
 
 
+app.get('/users/profile/:id', function(request, response) {
+	var userID = request.params.id;
+	var ID = request.session.user;
+		console.log(userID)
+		message.findAll({
+			where: {
+				user_id: userID,
+			}
+		}).then(function(messages) {
+			var Data = messages.map(function(message) {
+				return {
+					id: message.dataValues.id,
+					title: message.dataValues.title,
+					body: message.dataValues.body,
+					user_id: message.dataValues.user_id,
+				}
+			})
+			allPosts = Data;
+		}).then(function() {
+			response.render('users/profile', {
+				allUsersMessages: allPosts,
+			});
+		});
+});
 
- 
+
 var server = app.listen(3000, function() {
 	console.log('Example app listening on port: ' + server.address().port);
 });
-
-
