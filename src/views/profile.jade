@@ -7,10 +7,9 @@ html
 		script.
 			$(document).ready(function () {
 	
-					}
+					})
 
-				});
-			});
+	
 	body
 		#nav
 			ul
@@ -33,8 +32,10 @@ html
 		br
 		br
 		#main
+			h2 Hello #{name}
 			p
 			Welkom op je profiel
 				each message in allOwnMessages
 					h2 #{message.title}
 					h3 ✏ #{message.body}
+					

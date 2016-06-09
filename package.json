@@ -13,6 +13,7 @@
   "author": "",
   "license": "(MIT)",
   "dependencies": {
+    "bcrypt": "^0.8.6",
     "express": "^4.13.4",
     "express-session": "^1.13.0",
     "fs": "0.0.2",

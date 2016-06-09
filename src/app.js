@@ -4,6 +4,7 @@ var bodyParser = require('body-parser');
 var session = require('express-session');
 var fs = require('fs')
 var pg = require('pg')
+var bcrypt = require('bcrypt')
 
 
 var sequelize = new Sequelize('sarithbreedijk', 'sarithbreedijk', null, {
@@ -16,10 +17,39 @@ var sequelize = new Sequelize('sarithbreedijk', 'sarithbreedijk', null, {
 
 
 var user = sequelize.define('users', {
-	name: Sequelize.STRING,
-	email: Sequelize.STRING,
-	password: Sequelize.STRING,
-});
+	name: {
+		type: Sequelize.STRING,
+		allowNull: false,
+			validate: {
+				notEmpty: true,
+				len: [1,50]}
+	},
+	email: {
+		type: Sequelize.STRING,
+	allowNull: false,
+		validate: {
+			notEmpty: true,
+			len: [1,55]}
+		},
+	password:{
+		type: Sequelize.STRING,
+		allowNull: false,
+		validate: {
+			notEmpty: true,
+			len: [3, Infinity]},
+		}
+},
+		{
+	freezeTableName: true,
+	instanceMethods: {
+		generateHash: function(password) {
+			return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
+		},
+		validPassword: function(password) {
+			return bcrypt.compareSync(password, this.password);
+		},
+	}
+		});
 
 
 var message = sequelize.define('messages', {
@@ -94,6 +124,8 @@ app.post('/login', bodyParser.urlencoded({
 			email: request.body.email
 		}
 	}).then(function(user) {
+		var hashSecurePassword = request.body.password;
+		bcrypt.compare(hashSecurePassword, user.password.toString(), function(err, result){
 		if (user !== null && request.body.password === user.password) {
 			request.session.user = user;
 			response.redirect('/');
@@ -103,6 +135,7 @@ app.post('/login', bodyParser.urlencoded({
 	}, function(error) {
 		response.redirect('/?message=' + encodeURIComponent("Invalid email or password."));
 	});
+});
 });
 
 
@@ -124,16 +157,19 @@ app.get('/profile', function(request, response) {
 					user_id: appmessage.dataValues.user_id
 				}
 
+
 			})
 			var allOwnMessages = Data;
-			// console.log(allOwnMessages);
+		
 			console.log(allOwnMessages);
+			//console.log(allComments);
 			response.render('profile', {
-				allOwnMessages: allOwnMessages
+				allOwnMessages: allOwnMessages,
+				name: request.session.user.name
 			});
-		})
-	};
-});
+		});
+	}});
+
 
 
 
@@ -214,40 +250,34 @@ app.get('/overview', function(request, response) {
 			var allMessages = data;
 			response.render('overview', {
 				allMessages: allMessages
+
 			});
 		});
 	};
 });
 
 
-app.post('/comment', function(request, response) {
-	if (request.body.postComment != undefined) {
-		Promise.all([
-			Comment.create({
-				body: request.body.postComment
-			}),
-			User.findOne({
-				where: {
-					id: request.session.user.id
-				}
-			}),
-			Post.findOne({
-				where: {
-					id: request.body.id
-				}
-			})
-		]).then(function(allofthem) {
-			allofthem[0].setUser(allofthem[1])
-			allofthem[0].setPost(allofthem[2])
-		}).then(function() {
-			res.redirect(req.body.origin)
-		})
-	}
-	if (req.body.postComment === undefined) {
-		res.redirect(req.body.origin + '?message=' + encodeURIComponent("Please write a comment first."))
-	}
+app.post('/comments', bodyParser.urlencoded({extended: true}), function (request, response) {
+			Promise.all([
+				message.findOne({ 
+					where: {
+					 id: request.body.id 
+					} 
+				}),
+				user.findOne({ 
+					where: {
+					 id: request.session.user.id 
+					} 
+				})
+					]).then(function(allofthem){
+					console.log(allofthem[2])
+					allofthem[0].setUser(allofthem[1])
+					allofthem[0].setPost(allofthem[2])
+				}).then(function(){
+					res.redirect('/overview')
+				});
+				})
 
-})
 
 
 app.get('/specific', function(request, response) {
@@ -271,15 +301,16 @@ app.get('/specific', function(request, response) {
 	};
 });
 
-
+ 
 app.get('/users/profile/:id', function(request, response) {
 	var userID = request.params.id;
 	var ID = request.session.user;
 		console.log(userID)
 		message.findAll({
 			where: {
-				user_id: userID,
+				user_id: userID
 			}
+			 
 		}).then(function(messages) {
 			var Data = messages.map(function(message) {
 				return {
@@ -293,6 +324,7 @@ app.get('/users/profile/:id', function(request, response) {
 		}).then(function() {
 			response.render('users/profile', {
 				allUsersMessages: allPosts,
+				userID: userID
 			});
 		});
 });
