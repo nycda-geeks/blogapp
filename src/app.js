@@ -20,26 +20,28 @@ var user = sequelize.define('users', {
 	name: {
 		type: Sequelize.STRING,
 		allowNull: false,
-			validate: {
-				notEmpty: true,
-				len: [1,50]}
-	},
-	email: {
-		type: Sequelize.STRING,
-	allowNull: false,
 		validate: {
 			notEmpty: true,
-			len: [1,55]}
-		},
-	password:{
+			len: [1, 50]
+		}
+	},
+	email: {
 		type: Sequelize.STRING,
 		allowNull: false,
 		validate: {
 			notEmpty: true,
-			len: [3, Infinity]},
+			len: [1, 55]
 		}
-},
-		{
+	},
+	password: {
+		type: Sequelize.STRING,
+		allowNull: false,
+		validate: {
+			notEmpty: true,
+			len: [3, Infinity]
+		},
+	}
+}, {
 	freezeTableName: true,
 	instanceMethods: {
 		generateHash: function(password) {
@@ -49,19 +51,42 @@ var user = sequelize.define('users', {
 			return bcrypt.compareSync(password, this.password);
 		},
 	}
-		});
+});
 
 
 var message = sequelize.define('messages', {
-	title: Sequelize.STRING,
-	body: Sequelize.TEXT,
+	title: {
+		type: Sequelize.STRING,
+		allowNull: false,
+		validate: {
+			notEmpty: true,
+			len: [3, Infinity]
+		},
+	},
+	body: {
+		type: Sequelize.TEXT,
+		allowNull: false,
+		validate: {
+			notEmpty: true,
+			len: [3, Infinity]
+		},
+	},
 	user_id: Sequelize.INTEGER
 });
 
 var comment = sequelize.define('comment', {
-	title: Sequelize.STRING,
-	body: Sequelize.TEXT,
-	message_id: Sequelize.INTEGER
+	body: {
+		type: Sequelize.TEXT,
+		allowNull: false,
+		validate: {
+			notEmpty: true,
+			len: [3, Infinity]
+		},
+	},
+	message_id: Sequelize.INTEGER,
+	user_id: Sequelize.INTEGER,
+	username: Sequelize.TEXT
+
 });
 
 user.hasMany(message);
@@ -71,11 +96,11 @@ comment.belongsTo(message);
 user.hasMany(comment);
 comment.belongsTo(user);
 
-sequelize.sync({
-	force: false
-}).then(function() {
-	console.log('sync done')
-});
+// sequelize.sync({
+// 	force: true
+// }).then(function() {
+// 	console.log('sync done')
+// });
 
 
 var app = express();
@@ -125,17 +150,17 @@ app.post('/login', bodyParser.urlencoded({
 		}
 	}).then(function(user) {
 		var hashSecurePassword = request.body.password;
-		bcrypt.compare(hashSecurePassword, user.password.toString(), function(err, result){
-		if (user !== null && request.body.password === user.password) {
-			request.session.user = user;
-			response.redirect('/');
-		} else {
+		bcrypt.compare(hashSecurePassword, user.password.toString(), function(err, result) {
+			if (user !== null && request.body.password === user.password) {
+				request.session.user = user;
+				response.redirect('/');
+			} else {
+				response.redirect('/?message=' + encodeURIComponent("Invalid email or password."));
+			}
+		}, function(error) {
 			response.redirect('/?message=' + encodeURIComponent("Invalid email or password."));
-		}
-	}, function(error) {
-		response.redirect('/?message=' + encodeURIComponent("Invalid email or password."));
+		});
 	});
-});
 });
 
 
@@ -160,7 +185,7 @@ app.get('/profile', function(request, response) {
 
 			})
 			var allOwnMessages = Data;
-		
+
 			console.log(allOwnMessages);
 			//console.log(allComments);
 			response.render('profile', {
@@ -168,8 +193,8 @@ app.get('/profile', function(request, response) {
 				name: request.session.user.name
 			});
 		});
-	}});
-
+	}
+});
 
 
 
@@ -230,7 +255,7 @@ app.post('/createpost', bodyParser.urlencoded({
 		user_id: ID
 
 	}).then(function() {
-		response.redirect('/overview')
+		response.redirect('/profile')
 	});
 });
 
@@ -257,26 +282,6 @@ app.get('/overview', function(request, response) {
 });
 
 
-app.post('/comments', bodyParser.urlencoded({extended: true}), function (request, response) {
-			Promise.all([
-				message.findOne({ 
-					where: {
-					 id: request.body.id 
-					} 
-				}),
-				user.findOne({ 
-					where: {
-					 id: request.session.user.id 
-					} 
-				})
-					]).then(function(allofthem){
-					console.log(allofthem[2])
-					allofthem[0].setUser(allofthem[1])
-					allofthem[0].setPost(allofthem[2])
-				}).then(function(){
-					res.redirect('/overview')
-				});
-				})
 
 
 
@@ -301,34 +306,102 @@ app.get('/specific', function(request, response) {
 	};
 });
 
- 
+
 app.get('/users/profile/:id', function(request, response) {
 	var userID = request.params.id;
 	var ID = request.session.user;
-		console.log(userID)
-		message.findAll({
-			where: {
-				user_id: userID
+	console.log(userID)
+	message.findAll({
+		where: {
+			user_id: userID
+		}
+	}).then(function(messages) {
+		var Data = messages.map(function(message) {
+			return {
+				id: message.dataValues.id,
+				title: message.dataValues.title,
+				body: message.dataValues.body,
+				user_id: message.dataValues.user_id,
 			}
-			 
-		}).then(function(messages) {
-			var Data = messages.map(function(message) {
-				return {
-					id: message.dataValues.id,
-					title: message.dataValues.title,
-					body: message.dataValues.body,
-					user_id: message.dataValues.user_id,
-				}
-			})
-			allPosts = Data;
-		}).then(function() {
-			response.render('users/profile', {
-				allUsersMessages: allPosts,
-				userID: userID
-			});
+		})
+		allPosts = Data;
+	}).then(function() {
+		response.render('users/profile', {
+			allUsersMessages: allPosts,
+			userID: userID
 		});
+	});
 });
 
+app.get('/users/post/:id/:messageid', function(request, response) {
+	messageID = request.params.messageid;
+	var userID = request.params.id;
+	var ID = request.session.user;
+	console.log(messageID)
+	message.findAll({
+		where: {
+			id: messageID
+		}
+	}).then(function(messages) {
+		var Data = messages.map(function(message) {
+			return {
+				id: message.dataValues.id,
+				title: message.dataValues.title,
+				body: message.dataValues.body,
+				user_id: message.dataValues.user_id,
+			}
+		})
+		allPosts = Data;
+	}).then(function() {
+
+		comment.findAll({
+			where: {
+				message_id: messageID
+			}
+		}).then(function(comments) {
+			var Data = comments.map(function(comment) {
+				return {
+					id: comment.dataValues.id,
+					body: comment.dataValues.body,
+					message_id: comment.dataValues.user_id,
+					username: comment.dataValues.username
+				}
+			})
+			allComments = Data;
+			console.log(allComments);
+
+
+		}).then(function() {
+			response.render('users/post', {
+				allUsersMessages: allPosts,
+				allComments: allComments
+
+			});
+		});
+	});
+});
+
+
+app.post('/users/post/comments', bodyParser.urlencoded({
+	extended: true
+}), function(request, response) {
+	var ID = request.session.user.id;
+	var userid = request.params.id;
+	var commentor = request.session.user.name;
+
+	console.log("deze");
+	console.log(userid)
+	console.log(messageID);
+
+	comment.create({
+		body: request.body.body,
+		user_id: ID,
+		message_id: messageID,
+		username: commentor
+
+	})
+	response.redirect('/')
+});
 
 var server = app.listen(3000, function() {
 	console.log('Example app listening on port: ' + server.address().port);

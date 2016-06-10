@@ -24,7 +24,7 @@ html
 					li
 						a(href='/register') OR REGISTER ✿
 					li
-						a(href='/profile') CHECK OUT YOUR PROFILE ✿
+						a(href='/profile/') CHECK OUT YOUR PROFILE ✿
 					li
 						a(href='/createpost') OR CREATE AN AMAZING POST ✿
 					li
@@ -37,11 +37,11 @@ html
 		br
 		#main
 			if user
-				a(href='/profile') view profile
+				a(href='/users/profile/' + user.id) view profile
 				br
 				a(href='/logout') log out
 			else
-				h2 Welcome to this amazing blogApp. Check out all the cool stuff by using the navBar ⇝
+				h3 Welcome to this amazing blogApp. Check out all the cool stuff by using the navBar ⇝
 				p Currently you are not logged in, why dont you? 
 				a(href='/login') LOG IN ✰
 

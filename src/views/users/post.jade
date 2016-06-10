@@ -34,8 +34,13 @@ html
 		#main
 			p Welkom alle berichten van ..
 				each message in allUsersMessages
-					br
-					a(href="/users/post/" + userID + "/" + message.id) #{message.title}
+					h3 ✏ #{message.title}
 					h3 ✏ #{message.body}
-						
+						form(action='/users/post/comments' method='post')
+							h4 comment:
+							input#body(name='body')
+							input(type='submit' value='submit' id='submit')
+				each comment in allComments
+					h4 #{comment.body} written by #{comment.username}
+					//- each comment in allcomments
 			
